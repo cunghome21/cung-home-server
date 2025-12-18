@@ -1,8 +1,9 @@
+// index.js
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import Product from "./models/product.js";
+import Product from "./models/product.js"; // Đảm bảo file này tồn tại
 
 dotenv.config();
 
@@ -10,18 +11,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Test route để kiểm tra
+// ✅ Route test để kiểm tra server online
 app.get("/", (req, res) => {
-  res.send("Cưng Home API đang chạy 🚀");
+  res.send("🚀 Cưng Home API đang hoạt động!");
 });
 
-// ✅ Route chính lấy danh sách sản phẩm
+// ✅ Route chính để lấy danh sách sản phẩm
 app.get("/api/products", async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
     res.json(products);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
