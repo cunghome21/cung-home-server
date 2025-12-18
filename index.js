@@ -10,33 +10,29 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Kết nối MongoDB Atlas
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
-  .catch((err) => console.error("❌ MongoDB Error:", err));
-
-// Route test
+// ✅ Test route để kiểm tra
 app.get("/", (req, res) => {
-  res.send("Cưng Home Server đang chạy 🚀");
+  res.send("Cưng Home API đang chạy 🚀");
 });
 
-// Lấy danh sách sản phẩm
+// ✅ Route chính lấy danh sách sản phẩm
 app.get("/api/products", async (req, res) => {
-  const products = await Product.find().sort({ createdAt: -1 });
-  res.json(products);
-});
-
-// Thêm sản phẩm mới
-app.post("/api/products", async (req, res) => {
   try {
-    const newProduct = new Product(req.body);
-    await newProduct.save();
-    res.status(201).json(newProduct);
+    const products = await Product.find().sort({ createdAt: -1 });
+    res.json(products);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server chạy tại http://localhost:${PORT}`));
+
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("✅ Connected to MongoDB Atlas");
+    app.listen(PORT, () =>
+      console.log(`✅ Server chạy tại port ${PORT}`)
+    );
+  })
+  .catch((err) => console.error("❌ MongoDB Error:", err));
