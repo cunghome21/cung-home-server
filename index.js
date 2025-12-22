@@ -4,12 +4,25 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import Product from "./models/product.js"; // Đảm bảo file này tồn tại
+import Banner from "./models/banner.js";
+
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+
+app.get("/api/banners", async (req, res) => {
+  try {
+    const banners = await Banner.find().sort({ order: 1 });
+    res.json(banners);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // ✅ Route test để kiểm tra server online
 app.get("/", (req, res) => {
