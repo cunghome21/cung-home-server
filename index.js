@@ -1,14 +1,44 @@
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
 import Banner from "./models/banner.js";
 import Product from "./models/product.js";
 
-// Middleware đơn giản (bảo mật cơ bản)
+dotenv.config();
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// ✅ Kết nối MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ Connected to MongoDB Atlas"))
+  .catch((err) => console.error("❌ MongoDB Error:", err));
+
+// ✅ Middleware bảo mật cho admin
 app.use("/api/admin", (req, res, next) => {
   const auth = req.headers.authorization;
   if (auth === `Bearer ${process.env.ADMIN_TOKEN}`) next();
   else res.status(401).json({ error: "Unauthorized" });
 });
 
-// ✅ CRUD Banner
+// ✅ API PUBLIC
+app.get("/", (req, res) => res.send("🚀 Cưng Home API đang hoạt động!"));
+
+// Public - Banners
+app.get("/api/banners", async (req, res) => {
+  const banners = await Banner.find().sort({ order: 1 });
+  res.json(banners);
+});
+
+// Public - Products
+app.get("/api/products", async (req, res) => {
+  const products = await Product.find().sort({ createdAt: -1 });
+  res.json(products);
+});
+
+// ✅ ADMIN API (có token)
 app.get("/api/admin/banners", async (req, res) => {
   const banners = await Banner.find().sort({ order: 1 });
   res.json(banners);
@@ -28,22 +58,29 @@ app.delete("/api/admin/banners/:id", async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-// ✅ CRUD Product
+// PRODUCTS CRUD (Admin)
 app.get("/api/admin/products", async (req, res) => {
-  const products = await Product.find();
+  const products = await Product.find().sort({ createdAt: -1 });
   res.json(products);
 });
 
 app.post("/api/admin/products", async (req, res) => {
   try {
-    const p = await Product.create(req.body);
-    res.json(p);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const product = await Product.create(req.body);
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
 app.delete("/api/admin/products/:id", async (req, res) => {
-  await Product.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ message: "Đã xóa sản phẩm" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`✅ Server running at port ${PORT}`));
