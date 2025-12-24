@@ -1,52 +1,49 @@
-// index.js
-import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
-import Product from "./models/product.js"; // Đảm bảo file này tồn tại
 import Banner from "./models/banner.js";
+import Product from "./models/product.js";
 
+// Middleware đơn giản (bảo mật cơ bản)
+app.use("/api/admin", (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (auth === `Bearer ${process.env.ADMIN_TOKEN}`) next();
+  else res.status(401).json({ error: "Unauthorized" });
+});
 
-dotenv.config();
+// ✅ CRUD Banner
+app.get("/api/admin/banners", async (req, res) => {
+  const banners = await Banner.find().sort({ order: 1 });
+  res.json(banners);
+});
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-
-app.get("/api/banners", async (req, res) => {
+app.post("/api/admin/banners", async (req, res) => {
   try {
-    const banners = await Banner.find().sort({ order: 1 });
-    res.json(banners);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const banner = await Banner.create(req.body);
+    res.json(banner);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-
-// ✅ Route test để kiểm tra server online
-app.get("/", (req, res) => {
-  res.send("🚀 Cưng Home API đang hoạt động!");
+app.delete("/api/admin/banners/:id", async (req, res) => {
+  await Banner.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
 
-// ✅ Route chính để lấy danh sách sản phẩm
-app.get("/api/products", async (req, res) => {
+// ✅ CRUD Product
+app.get("/api/admin/products", async (req, res) => {
+  const products = await Product.find();
+  res.json(products);
+});
+
+app.post("/api/admin/products", async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const p = await Product.create(req.body);
+    res.json(p);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-const PORT = process.env.PORT || 5000;
-
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("✅ Connected to MongoDB Atlas");
-    app.listen(PORT, () =>
-      console.log(`✅ Server chạy tại port ${PORT}`)
-    );
-  })
-  .catch((err) => console.error("❌ MongoDB Error:", err));
+app.delete("/api/admin/products/:id", async (req, res) => {
+  await Product.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
+});
