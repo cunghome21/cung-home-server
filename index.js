@@ -37,9 +37,17 @@ app.get("/api/products", async (req, res) => {
   const products = await Product.find().sort({ createdAt: -1 });
   res.json(products);
 });
-app.get("/api/products/:id", async (req, res) => {
+app.get("/api/products/:idOrSlug", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const { idOrSlug } = req.params;
+    const isObjectId = mongoose.isValidObjectId(idOrSlug);
+    const query = { $or: [{ slug: idOrSlug }] };
+    
+    if (isObjectId) {
+      query.$or.push({ _id: idOrSlug });
+    }
+
+    const product = await Product.findOne(query);
     if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     res.json(product);
   } catch (error) {
