@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import Banner from "./models/banner.js";
 import Product from "./models/product.js";
+import { adminPaymentRouter, publicPaymentRouter } from "./routes/paymentRequests.js";
 
 dotenv.config();
 const app = express();
@@ -110,6 +111,9 @@ adminRouter.delete("/products/:id", async (req, res) => {
   }
 });
 
+// PAYMENT REQUESTS (Admin) — inherits the existing ADMIN_TOKEN middleware.
+adminRouter.use("/payment-requests", adminPaymentRouter);
+
 // Gắn Admin Router vào app
 app.use("/api/admin", adminRouter);
 
@@ -138,6 +142,10 @@ app.get("/api/products/:idOrSlug", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Public access is limited to a single unguessable payment request and the
+// router returns a strict allowlist of payment fields.
+app.use("/api/payment-requests", publicPaymentRouter);
 
 // 🩺 Route kiểm tra tình trạng server
 app.get("/api/health", (req, res) => {
